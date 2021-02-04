@@ -1,4 +1,4 @@
-# Your name here
+# George Wang
 #
 # searchAgents.py
 # ---------------
@@ -259,7 +259,7 @@ def manhattanHeuristic(position, problem, info={}):
     xy1 = position
     xy2 = problem.goal
     "*** YOUR CODE HERE ***"
-    raise Exception("Manhattan Heuristic is not complete!")
+    return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
 
 def euclideanHeuristic(position, problem, info={}):
     "The Euclidean distance heuristic for a PositionSearchProblem"
@@ -267,4 +267,4 @@ def euclideanHeuristic(position, problem, info={}):
     xy1 = position
     xy2 = problem.goal
     "*** YOUR CODE HERE ***"
-    raise Exception("Euclidean Heuristic is not complete!")
+    return ((xy1[0] - xy2[0])**2 + (xy1[1] - xy2[1])**2)**(1/2)

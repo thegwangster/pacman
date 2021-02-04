@@ -1,4 +1,4 @@
-# Your Name Here
+# George Wang
 #
 # search.py
 # ---------
@@ -108,13 +108,97 @@ def depthFirstSearch(problem):
 
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    # visited is a dictionary with location:([path], cost) pairs
+    # i realize now that cost is kinda unnecessary lmao. whoops
+    visited = {}
+    stack = util.Stack()
+
+    startState = problem.getStartState()
+    if problem.isGoalState(startState):
+        return []
+    stack.push((startState, '', 0))
+    # response are dictionaries for finding prev
+    response = {"North": (0, -1), "South": (0, 1), "East": (-1, 0), "West": (1, 0)}
+
+    # Main loop
+    while not stack.isEmpty():
+        # Pop from stack - node is (location, direction, cost)
+        node = stack.pop()
+        visited[node[0]] = (node[1], node[2])
+
+        # Managing successors
+        for s in problem.getSuccessors(node[0]):
+            # Check goal state on creation
+            if problem.isGoalState(s[0]):
+                get = response[s[1]]
+                back = (s[0][0] + get[0], s[0][1] + get[1])
+                path = [s[1]]
+                cost = s[2]
+                while back != startState:
+                    path.append(visited[back][0])
+                    cost += visited[back][1]
+                    get = response[visited[back][0]]
+                    back = (back[0] + get[0], back[1] + get[1])
+                path.reverse()
+                return path
+
+            # Check if s in frontier (stack)
+            inFrontier = False
+            for f in stack.list:
+                if s[0] == f[0]:
+                    inFrontier = True
+            # Put in stack if not visited or in frontier
+            if (not s[0] in visited) and (not inFrontier):
+                stack.push(s)
+    return None
 
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # visited is a dictionary with location:([path], cost) pairs
+    visited = {}
+    stack = util.Queue()
+
+    startState = problem.getStartState()
+    if problem.isGoalState(startState):
+        return []
+    stack.push((startState, '', 0))
+    # response are dictionaries for finding prev
+    response = {"North": (0, -1), "South": (0, 1), "East": (-1, 0), "West": (1, 0)}
+
+    # Main loop
+    while not stack.isEmpty():
+        # Pop from stack - node is (location, direction, cost)
+        node = stack.pop()
+        visited[node[0]] = (node[1], node[2])
+
+        # Managing successors
+        for s in problem.getSuccessors(node[0]):
+            # Check goal state on creation
+            if problem.isGoalState(s[0]):
+                get = response[s[1]]
+                back = (s[0][0] + get[0], s[0][1] + get[1])
+                path = [s[1]]
+                cost = s[2]
+                while back != startState:
+                    path.append(visited[back][0])
+                    cost += visited[back][1]
+                    get = response[visited[back][0]]
+                    back = (back[0] + get[0], back[1] + get[1])
+                path.reverse()
+                return path
+
+            # Check if s in frontier (stack)
+            inFrontier = False
+            for f in stack.list:
+                if s[0] == f[0]:
+                    inFrontier = True
+            # Put in stack if not visited or in frontier
+            if (not s[0] in visited) and (not inFrontier):
+                stack.push(s)
+    return None
 
 
 def iterativeDeepeningSearch(problem):
@@ -123,13 +207,92 @@ def iterativeDeepeningSearch(problem):
     Please use a maximum depth limit of 1000
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # Goal is checked on creation, so we need to check start state
+    startLocation = problem.getStartState()
+    if problem.isGoalState(startLocation):
+        return []
+
+    # Max depth limit of 1000
+    for limit in range(1, 1001):
+        answer = searchLevel(problem, startLocation, 0, limit, [])
+        if answer != "F":
+            return answer
+    return None
+
+
+def searchLevel(problem, location, level, limit, path):
+    successors = problem.getSuccessors(location)
+    # Iterating through successors backwards to simulate a stack
+    successors.reverse()
+    for s in successors:  # (location, direction, cost)
+        # Goal test on creation
+        if problem.isGoalState(s[0]):
+            path.append(s[1])
+            return path
+
+        # If successor is at limit and isn't goal state, do nothing
+        if level + 1 != limit:
+            # Add to path
+            newPath = path
+            newPath.append(s[1])
+            # Recursion
+            answer = searchLevel(problem, s[0], level + 1, limit, newPath)
+            if answer != "F":
+                return answer
+            # Remove from path
+            path.pop(-1)
+
+    return "F"
 
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    visited = {}  # Stores things as - location:(direction, total cost)
+    frontInfo = {}  # Frontier items - location:(direction, total cost)
+    frontier = util.PriorityQueue()  # Items are (location)
+    startState = problem.getStartState()
+    frontier.push(startState, 0)
+    frontInfo[startState] = ("", 0)
+    # backtrack is a dictionary for backtracking
+    backtrack = {"North": (0, -1), "South": (0, 1), "East": (-1, 0), "West": (1, 0)}
+
+    # Main loop
+    while not frontier.isEmpty():
+        visiting = frontier.pop()  # (location)
+        visitInfo = frontInfo[visiting]  # (direction, total cost)
+        if visiting == startState:
+            # Stores - startState:('', 0)
+            visited[startState] = (visitInfo[0], visitInfo[1])
+        else:  # Backtracks by one to get the total cost of the previous node
+            back = backtrack[visitInfo[0]]
+            prev = (visiting[0] + back[0], visiting[1] + back[1])
+            prevCost = visited[prev][1]
+            # Stores - location:(direction, prevCost + cost)
+            visited[visiting] = (visitInfo[0], visitInfo[1])
+
+        # Goal check on expansion
+        if problem.isGoalState(visiting):
+            back = backtrack[visitInfo[0]]
+            prev = (visiting[0] + back[0], visiting[1] + back[1])
+            path = [visitInfo[0]]
+            while prev != startState:
+                path.append(visited[prev][0])
+                back = backtrack[visited[prev][0]]
+                prev = (prev[0] + back[0], prev[1] + back[1])
+            path.reverse()
+            return path
+
+        # Managing successors
+        for s in problem.getSuccessors(visiting):  # (location, direction, cost)
+            if not s[0] in visited:
+                # If s[0] is already in frontier and new total cost would be greater, do nothing
+                sucCost = visited[visiting][1] + s[2]
+                if not (s[0] in frontInfo and sucCost >= frontInfo[s[0]][1]):
+                    frontInfo[s[0]] = (s[1], sucCost)
+                frontier.update(s[0], sucCost)
+
+    return None
 
 
 def nullHeuristic(state, problem=None):
@@ -144,7 +307,51 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    visited = {}  # Stores things as - location:(direction, total cost)
+    frontInfo = {}  # Frontier items - location:(direction, total cost)
+    frontier = util.PriorityQueue()  # Items are (location)
+    startState = problem.getStartState()
+    frontier.push(startState, 0)
+    frontInfo[startState] = ("", 0)
+    # backtrack is a dictionary for backtracking
+    backtrack = {"North": (0, -1), "South": (0, 1), "East": (-1, 0), "West": (1, 0)}
+
+    # Main loop
+    while not frontier.isEmpty():
+        visiting = frontier.pop()  # (location)
+        visitInfo = frontInfo[visiting]  # (direction, total cost)
+        if visiting == startState:
+            # Stores - startState:('', 0)
+            visited[startState] = (visitInfo[0], visitInfo[1])
+        else:  # Backtracks by one to get the total cost of the previous node
+            back = backtrack[visitInfo[0]]
+            prev = (visiting[0] + back[0], visiting[1] + back[1])
+            prevCost = visited[prev][1]
+            # Stores - location:(direction, prevCost + cost)
+            visited[visiting] = (visitInfo[0], visitInfo[1])
+
+        # Goal check on expansion
+        if problem.isGoalState(visiting):
+            back = backtrack[visitInfo[0]]
+            prev = (visiting[0] + back[0], visiting[1] + back[1])
+            path = [visitInfo[0]]
+            while prev != startState:
+                path.append(visited[prev][0])
+                back = backtrack[visited[prev][0]]
+                prev = (prev[0] + back[0], prev[1] + back[1])
+            path.reverse()
+            return path
+
+        # Managing successors
+        for s in problem.getSuccessors(visiting):  # (location, direction, cost)
+            if not s[0] in visited:
+                # If s[0] is already in frontier and new total cost would be greater, do nothing
+                sucCost = visited[visiting][1] + s[2] + heuristic(s[0], problem)
+                if not (s[0] in frontInfo and sucCost >= frontInfo[s[0]][1]):
+                    frontInfo[s[0]] = (s[1], sucCost)
+                frontier.update(s[0], sucCost)
+
+    return None
 
 
 # Abbreviations
